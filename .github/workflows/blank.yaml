@@ -5,8 +5,8 @@ name: CI
 # Controls when the action will run. 
 on:
   # # Triggers the workflow on push or pull request events but only for the main branch
-  # pull_request:
-  #   branches: [ main ]
+  pull_request:
+    branches: [ test_pr_comments, develop ]
   issue_comment:
     types: [created,edited]
 jobs:
