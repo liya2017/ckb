@@ -1,28 +1,11 @@
 name: Pull Request comments test
 on:
-  push:
-    branches: [ github_action_learn ]
   issue_comment:
-    types: [created, edited]
-    branches: [ github_action_learn ]
+    types: [created]
 jobs:
-  Pull-Request-comments:
+  example:
     runs-on: ubuntu-latest
     steps:
-      - uses: khan/pull-request-comment-trigger@master
-        id: check
-        with:
-          trigger: '@Pull-Request-comments'
-          reaction: rocket
-        env:
-          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
-      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-      - name: Check out repository code
-        uses: actions/checkout@v2
-      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-      - run: echo "🖥️ The workflow is now ready to test your code on the runner."
-      - name: List files in the repository
-        run: |
-          ls ${{ github.workspace }}
-      - run: echo "🍏 This job's status is ${{ job.status }}."
+      - name: Execute for pull request comments only
+        if: github.event.issue.pull_request
+        run: echo "This is a pull request comment event"
