@@ -15,7 +15,6 @@ jobs:
           trigger: '@Pull-Request-comments'
           reaction: rocket
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "🎉 The job was automatically triggered by a ${{ self.comments }} event."
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
       - name: Check out repository code
         uses: actions/checkout@v2
