@@ -10,7 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "🎉 The job was automatically triggered by a ${{ pull_request_review_comment. }} event."
+      - run: echo "🎉 The job was automatically triggered by a ${{ self }} event."
+      - run: echo "🎉 The job was automatically triggered by a ${{ self.comments }} event."
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
       - name: Check out repository code
         uses: actions/checkout@v2
