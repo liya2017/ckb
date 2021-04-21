@@ -1,5 +1,7 @@
 name: Pull Request comments test
 on:
+  push:
+    branches: [ github_action_learn ]
   pull_request_review_comment:
     types: [created, edited]
     branches: [ github_action_learn ]
