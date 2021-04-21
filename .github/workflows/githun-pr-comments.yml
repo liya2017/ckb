@@ -1,6 +1,7 @@
 name: Pull Request comments test
 on:
   issue_comment:
+    branches: [ github_action_learn ]
     types: [created]
 jobs:
   example:
