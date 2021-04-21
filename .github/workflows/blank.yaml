@@ -8,6 +8,7 @@ on:
   pull_request:
     branches: [ test_pr_comments, develop ]
   issue_comment:
+    branches: [ develop ]
     types: [created,edited]
 jobs:
   deploy-check:
