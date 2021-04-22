@@ -1,11 +1,13 @@
 name: PR verify before merge by bors
 
 on:
-  pull_request:
-    types: [ opened, synchronize, reopened ]
   push:
-  schedule:
-    - cron: '0 23 * * *'
+    branches:
+      - develop
+      - staging
+      - staging2
+      - master
+      - trying
 
 env:
   CARGO_TERM_COLOR: always
@@ -39,59 +41,12 @@ jobs:
       SENTRY_DSN: ${{ matrix.SENTRY_DSN }}
       ImageOS:  ${{ matrix.ImageOS }}
 
-  Benchmarks_Test:
-    if: | 
-      (contains('
-        refs/heads/master
-        refs/heads/staging
-        refs/heads/staging2
-        refs/heads/trying
-      ', github.ref) && !contains('pull_request',github.event_name)) || contains('refs/heads/rc/*', github.ref) || (contains('refs/heads/develop',github.ref) && !contains(github.event.head_commit.message, '^Merge #\d+/'))
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [Linux-runner, mac-runner]
-    needs: WASM_build
-    steps:
-    - uses: actions/checkout@v2
-    - name: Benchmarks_Test
-      run: |
-        make bench-test
-
-  Integration_Test:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [Linux-runner, mac-runner,win-runner]
-        include:
-          - os: Linux-runner
-            script_run: make CKB_TEST_SEC_COEFFICIENT=5 CKB_TEST_ARGS="-c 4 --no-report" integration
-          - os:  mac-runner
-            script_run: make CKB_TEST_SEC_COEFFICIENT=5 CKB_TEST_ARGS="-c 4 --no-report" integration
-          - os: win-runner
-            script_run: devtools/windows/make CKB_TEST_SEC_COEFFICIENT=5 CKB_TEST_ARGS="-c 4 --no-report" integration
-            CI: true
-            SENTRY_DSN: "https://15373165fbf2439b99ba46684dfbcb12@sentry.nervos.org/7"
-    steps:
-    - uses: actions/checkout@v2
-    - name: Integration_Test
-      run: ${{ matrix.script_run }}
-    env:
-      CI: ${{ matrix.CI }}
-      SENTRY_DSN: ${{ matrix.SENTRY_DSN }}
-
   Linters:
-    if: | 
-      contains('
-        refs/heads/master
-        refs/heads/staging
-        refs/heads/staging2
-        refs/heads/trying
-      ', github.ref) || ${{github.event_name}} == 'pull_request'
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [Linux-runner, mac-runner]
+    needs: UnitTest
     steps:
     - uses: actions/checkout@v2
     - name: Linters
@@ -101,15 +56,7 @@ jobs:
          make fmt
          make clippy
          git diff --exit-code Cargo.lock
-
   Latest_Linters:
-    if: | 
-      contains('
-        refs/heads/master
-        refs/heads/staging
-        refs/heads/staging2
-        refs/heads/trying
-      ', github.ref) || ${{github.event_name}} == 'pull_request'
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -132,15 +79,7 @@ jobs:
         make fmt
         make clippy
         mv rust-toolchain.bak rust-toolchain
-
   Quick_Check:
-    if: | 
-      contains('
-        refs/heads/master
-        refs/heads/staging
-        refs/heads/staging2
-        refs/heads/trying
-      ', github.ref) || ${{github.event_name}} == 'pull_request'
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -155,15 +94,7 @@ jobs:
         make check-dirty-rpc-doc
         make check-dirty-hashes-toml
         devtools/ci/check-cyclic-dependencies.py
-
   Cyclic_dev_dependencies:
-    if: | 
-      contains('
-        refs/heads/master
-        refs/heads/staging
-        refs/heads/staging2
-        refs/heads/trying
-      ', github.ref) || ${{github.event_name}} == 'pull_request'
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -175,15 +106,7 @@ jobs:
     - name: Cyclic_dev_dependencies
       run: |
         devtools/ci/check-cyclic-dependencies.py --dev
-
   Security_Audit_Licenses:
-    if: | 
-      contains('
-        refs/heads/master
-        refs/heads/staging
-        refs/heads/staging2
-        refs/heads/trying
-      ', github.ref) || ${{github.event_name}} == 'pull_request'
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -198,15 +121,7 @@ jobs:
         make security-audit
         make check-crates
         make check-licenses
-
   WASM_build:
-    if: | 
-      contains('
-        refs/heads/master
-        refs/heads/staging
-        refs/heads/staging2
-        refs/heads/trying
-      ', github.ref) || ${{github.event_name}} == 'pull_request'
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -219,18 +134,47 @@ jobs:
         export PATH=/usr/lib/llvm-8/bin:$PATH
         rustup target add wasm32-unknown-unknown
         make wasm-build-test
-
+  Benchmarks_Test:
+    if: |
+      contains(github.event.push.branch, ["staging", "trying","staging2" ] &&
+      contains(fromJson('[ "bors" ]'), github.actor)
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [Linux-runner, mac-runner]
+    needs: WASM_build
+    steps:
+    - uses: actions/checkout@v2
+    - name: Benchmarks_Test
+      run: |
+        make bench-test
+  Integration_Test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [Linux-runner, mac-runner,win-runner]
+        include:
+          - os: Linux-runner
+            script_run: make integration
+          - os:  mac-runner
+            script_run: make integration
+          - os: win-runner
+            script_run: devtools/windows/make CKB_TEST_SEC_COEFFICIENT=5 CKB_TEST_ARGS="-c 4 --no-report" integration
+            CI: true
+            SENTRY_DSN: "https://15373165fbf2439b99ba46684dfbcb12@sentry.nervos.org/7"
+    needs: Benchmarks_Test
+    steps:
+    - uses: actions/checkout@v2
+    - name: Integration_Test
+      run: ${{ matrix.script_run }}
+    env:
+      CI: ${{ matrix.CI }}
+      SENTRY_DSN: ${{ matrix.SENTRY_DSN }}
   ci-success:
-    if: | 
-      （contains('
-        refs/heads/master
-        refs/heads/staging
-        refs/heads/staging2
-        refs/heads/trying
-      ', github.ref) && contains(fromJson('[ "bors"]'), github.actor)）&& ${{ success() }}
     name: ci
+    if: ${{ success() }}
     needs:
-      - UnitTest
+      - Test
       - Linters
       - Quick_Check
       - Security_Audit_Licenses
