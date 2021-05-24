@@ -1,10 +1,7 @@
 status = [
-  "Travis CI - Branch"
+  "ci"
 ]
 
-pr_status = [
-  "Travis CI - Pull Request"
-]
 
 timeout_sec = 7200
 delete_merged_branches = true
