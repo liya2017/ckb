@@ -1,9 +1,5 @@
 status = [
-  "Travis CI - Branch"
-]
-
-pr_status = [
-  "Travis CI - Pull Request"
+  "ci"
 ]
 
 timeout_sec = 7200
