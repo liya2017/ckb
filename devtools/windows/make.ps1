@@ -78,7 +78,6 @@ function run-integration {
   git submodule update --init
   cp -Fo Cargo.lock test/Cargo.lock
   rm -Re -Fo -ErrorAction SilentlyContinue test/target
-
   cargo build --features deadlock_detection
   New-Item -ItemType Junction -Path test/target -Value "$($env:CARGO_TARGET_DIR ?? "$(pwd)/target")"
 
