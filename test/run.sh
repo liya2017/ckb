@@ -66,7 +66,7 @@ EOF
 
   unset encrypted_82dff4145bbf_iv encrypted_82dff4145bbf_key GITHUB_TOKEN GPG_SIGNER QINIU_ACCESS_KEY QINIU_SECRET_KEY
   cat "$CKB_INTEGRATION_FAILURE_FILE" | xargs -t -L 1 -I '%' sentry-cli send-event -m '%' -r "$CKB_RELEASE" --logfile "${test_log_file}"
-  
+
 fi
 
 exit "$EXIT_CODE"
