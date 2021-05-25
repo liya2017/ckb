@@ -193,7 +193,7 @@ jobs:
   ci-success:
     name: ci
     if: |
-       contains(fromJson('[ "bors"]'), github.actor)
+       contains('bors', github.actor)
     needs:
       - UnitTest
       - Linters
