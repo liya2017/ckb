@@ -1,4 +1,4 @@
-name: PR verify before merge by bors
+name: CI workflow
 
 on:
   pull_request:
@@ -40,8 +40,6 @@ jobs:
       run: ${{ matrix.script_run }}
     - name: echo_actor
       run: echo ${{github.actor}}
-    - name: echo_ref
-      run: echo ${{github.ref}}
     env:
       CI: ${{ matrix.CI }}
       SENTRY_DSN: ${{ matrix.SENTRY_DSN }}
@@ -74,7 +72,6 @@ jobs:
     strategy:
       matrix:
         os: [Linux-runner, mac-runner]
-    needs: WASM_build
     steps:
     - uses: actions/checkout@v2
     - name: Benchmarks_Test
@@ -208,9 +205,12 @@ jobs:
       - Benchmarks_Test
       - Integration_Test
     if: |
-       contains(fromJson('[ "bors"]'), github.actor) && 
-       ${{ success() }}
-    runs-on: ubuntu-latest
+       contains('bors', github.actor) && success()
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [Linux-runner, mac-runner]
     steps:
       - name: CI succeeded
         run: exit 0
+
