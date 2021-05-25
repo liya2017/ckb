@@ -98,7 +98,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        ref: master 
+        ref: master
     - name: Linters
       run: |
          cargo fmt --version || rustup component add rustfmt
