@@ -68,7 +68,6 @@ jobs:
     strategy:
       matrix:
         os: [Linux-runner, mac-runner]
-    needs: WASM_build
     steps:
     - uses: actions/checkout@v2
     - name: Benchmarks_Test
@@ -203,7 +202,11 @@ jobs:
       - WASM_build
       - Benchmarks_Test
       - Integration_Test
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [Linux-runner, mac-runner]
     steps:
       - name: CI succeeded
+        if: ${{ success() }}
         run: exit 0
