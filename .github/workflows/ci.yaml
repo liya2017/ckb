@@ -193,8 +193,6 @@ jobs:
 
   ci-success:
     name: ci
-    if: |
-        ${{ success() }}
     needs:
       # - UnitTest
       - Linters
@@ -203,6 +201,7 @@ jobs:
       - WASM_build
       - Benchmarks_Test
       # - Integration_Test
+    if: success()
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
