@@ -73,6 +73,7 @@ jobs:
     - name: Benchmarks_Test
       run: |
         make bench-test
+        exit 1
 
   Linters:
     if: | 
@@ -193,7 +194,7 @@ jobs:
   ci-success:
     name: ci
     if: |
-       contains('bors', github.actor) 
+        ${{ success() }}
     needs:
       # - UnitTest
       - Linters
@@ -208,5 +209,4 @@ jobs:
         os: [Linux-runner, mac-runner]
     steps:
       - name: CI succeeded
-        if: ${{ success() }}
         run: exit 0
