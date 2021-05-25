@@ -194,7 +194,7 @@ jobs:
   ci-success:
     name: ci
     if: |
-       contains(fromJson('[ "bors"]'), github.actor) && ${{ success() }}
+       contains(fromJson('[ "bors"]'), github.actor) && (${{ success() }})
     needs:
       - UnitTest
       - Linters
