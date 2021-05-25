@@ -1,4 +1,4 @@
-name: CI workflow
+name: PR verify before merge by bors
 
 on:
   pull_request:
@@ -199,9 +199,6 @@ jobs:
 
   ci-success:
     name: ci
-    if: |
-       contains(fromJson('[ "bors"]'), github.actor) && 
-       ${{ success() }}
     needs:
       - UnitTest
       - Linters
@@ -210,6 +207,9 @@ jobs:
       - WASM_build
       - Benchmarks_Test
       - Integration_Test
+    if: |
+       contains(fromJson('[ "bors"]'), github.actor) && 
+       ${{ success() }}
     runs-on: ubuntu-latest
     steps:
       - name: CI succeeded
