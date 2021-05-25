@@ -1,4 +1,4 @@
-name: PR verify before merge by bors
+name: CI workflow
 
 on:
   pull_request:
