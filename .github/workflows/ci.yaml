@@ -73,7 +73,6 @@ jobs:
     - name: Benchmarks_Test
       run: |
         make bench-test
-        exit 1
 
   Linters:
     if: | 
@@ -201,7 +200,8 @@ jobs:
       - WASM_build
       - Benchmarks_Test
       # - Integration_Test
-    if: success()
+    if: |
+       contains('bors', github.actor) && success()
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
