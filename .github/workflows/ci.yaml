@@ -10,8 +10,6 @@ on:
       - "staging"
       - "staging2"
       - "rc/*"
-  schedule:
-    - cron: '0 4 * * *'
 
 env:
   CARGO_TERM_COLOR: always
@@ -201,9 +199,6 @@ jobs:
 
   ci-success:
     name: ci
-    if: |
-       contains(fromJson('[ "bors"]'), github.actor) && 
-       ${{ success() }}
     needs:
       - UnitTest
       - Linters
@@ -212,6 +207,9 @@ jobs:
       - WASM_build
       - Benchmarks_Test
       - Integration_Test
+    if: |
+       contains(fromJson('[ "bors"]'), github.actor) && 
+       ${{ success() }}
     runs-on: ubuntu-latest
     steps:
       - name: CI succeeded
