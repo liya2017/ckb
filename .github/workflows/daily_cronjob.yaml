@@ -27,14 +27,20 @@ jobs:
             CI: true
             ImageOS: 'windows-2019'
             BUILD_BUILDID: ${{ github.sha }}
+        branch:
+          - master
+          - develop
     steps:
     - uses: actions/checkout@v2
+      with:
+        ref: ${{ matrix.branch }}
     - name: UnitTest
       run: ${{ matrix.script_run }}
     env:
       CI: ${{ matrix.CI }}
       SENTRY_DSN: ${{ matrix.SENTRY_DSN }}
       ImageOS:  ${{ matrix.ImageOS }}
+
   Benchmarks_Test:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -42,9 +48,14 @@ jobs:
         os:
         -  Linux-runner
         -  mac-runner
+        branch:
+          - master
+          - develop
     needs: UnitTest
     steps:
     - uses: actions/checkout@v2
+      with:
+        ref: ${{ matrix.branch }}
     - name: Benchmarks_Test
       run: make bench-test
 
@@ -62,9 +73,14 @@ jobs:
             script_run: devtools/windows/make CKB_TEST_SEC_COEFFICIENT=5 CKB_TEST_ARGS="-c 4 --no-report" integration
             CI: true
             SENTRY_DSN: "https://15373165fbf2439b99ba46684dfbcb12@sentry.nervos.org/7"
+        branch:
+          - master
+          - develop
     needs: Benchmarks_Test
     steps:
     - uses: actions/checkout@v2
+      with:
+        ref: ${{ matrix.branch }}
     - name: Integration_Test
       run: ${{ matrix.script_run }}
     env:
@@ -79,9 +95,10 @@ jobs:
         -  Linux-runner
         -  mac-runner
     needs: Integration_Test
-    if: ${{github.ref == 'refs/heads/master'}}
     steps:
     - uses: actions/checkout@v2
+      with:
+        ref: master 
     - name: Linters
       run: |
          cargo fmt --version || rustup component add rustfmt
@@ -89,6 +106,7 @@ jobs:
          make fmt
          make clippy
          git diff --exit-code Cargo.lock
+
   Latest_Linters:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -103,6 +121,8 @@ jobs:
     continue-on-error: true
     steps:
     - uses: actions/checkout@v2
+      with:
+        ref: master
     - name: Pre install
       run: ${{ matrix.script_run }}
     - name: Latest_Linters
@@ -112,6 +132,7 @@ jobs:
         make fmt
         make clippy
         mv rust-toolchain.bak rust-toolchain
+
   Quick_Check:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -122,6 +143,8 @@ jobs:
     needs: Latest_Linters
     steps:
     - uses: actions/checkout@v2
+      with:
+        ref: master
     - name: Quick_Check
       run: |
         make check-cargotoml
@@ -129,6 +152,7 @@ jobs:
         make check-dirty-rpc-doc
         make check-dirty-hashes-toml
         devtools/ci/check-cyclic-dependencies.py
+
   Cyclic_dev_dependencies:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -140,9 +164,12 @@ jobs:
     continue-on-error: true
     steps:
     - uses: actions/checkout@v2
+      with:
+        ref: master
     - name: Cyclic_dev_dependencies
       run: |
         devtools/ci/check-cyclic-dependencies.py --dev
+
   Security_Audit_Licenses:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -154,12 +181,15 @@ jobs:
     continue-on-error: true
     steps:
     - uses: actions/checkout@v2
+      with:
+        ref: master
     - name: Security Audit & Licenses
       run: |
         cargo deny --version || travis_retry cargo install cargo-deny --locked
         make security-audit
         make check-crates
         make check-licenses
+
   WASM_build:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -170,6 +200,8 @@ jobs:
     needs: Security_Audit_Licenses
     steps:
     - uses: actions/checkout@v2
+      with:
+        ref: master
     - name: WASM build
       run: |
         export PATH=/usr/lib/llvm-8/bin:$PATH
@@ -186,6 +218,8 @@ jobs:
     needs: WASM_build
     steps:
     - uses: actions/checkout@v2
+      with:
+        ref: master
     - name: Code Coverage
       run: |
         cargo tarpaulin --version || travis_retry cargo install cargo-tarpaulin --locked
