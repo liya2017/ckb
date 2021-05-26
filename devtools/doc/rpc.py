@@ -53,7 +53,7 @@ CAMEL_TO_SNAKE_PATTERN = re.compile(r'(?<!^)(?=[A-Z])')
 if "CARGO_TARGET_DIR" in os.environ:
   TARGET_DIR=os.getenv('CARGO_TARGET_DIR')
 else:
-  TARGET_DIR="../target"
+  TARGET_DIR="target"
 
 def camel_to_snake(name):
     return CAMEL_TO_SNAKE_PATTERN.sub('_', name).lower()
