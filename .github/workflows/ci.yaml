@@ -123,24 +123,24 @@ jobs:
         make clippy
         mv rust-toolchain.bak rust-toolchain
 
-  # Quick_Check:
-  #   if: |
-  #     contains(github.event_name, 'pull_request') ||
-  #     contains(fromJson('[ "refs/heads/master", "refs/heads/trying","refs/heads/staging", "refs/heads/staging2" ]'), github.ref)
-  #   runs-on: ${{ matrix.os }}
-  #   strategy:
-  #     matrix:
-  #       os: [Linux-runner, mac-runner]
-  #   needs: Latest_Linters
-  #   steps:
-  #   - uses: actions/checkout@v2
-  #   - name: Quick_Check
-  #     run: |
-  #       make check-cargotoml
-  #       make check-whitespaces
-  #       make check-dirty-rpc-doc
-  #       make check-dirty-hashes-toml
-  #       devtools/ci/check-cyclic-dependencies.py
+  Quick_Check:
+    if: |
+      contains(github.event_name, 'pull_request') ||
+      contains(fromJson('[ "refs/heads/master", "refs/heads/trying","refs/heads/staging", "refs/heads/staging2" ]'), github.ref)
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [Linux-runner, mac-runner]
+    needs: Latest_Linters
+    steps:
+    - uses: actions/checkout@v2
+    - name: Quick_Check
+      run: |
+        make check-cargotoml
+        make check-whitespaces
+        make check-dirty-rpc-doc
+        make check-dirty-hashes-toml
+        devtools/ci/check-cyclic-dependencies.py
 
   Cyclic_dev_dependencies:
     if: |
@@ -150,7 +150,7 @@ jobs:
     strategy:
       matrix:
         os: [Linux-runner, mac-runner]
-    needs: Latest_Linters
+    needs: Quick_Check
     continue-on-error: true
     steps:
     - uses: actions/checkout@v2
@@ -199,7 +199,7 @@ jobs:
     needs:
       - UnitTest
       - Linters
-      # - Quick_Check
+      - Quick_Check
       - Security_Audit_Licenses
       - WASM_build
       - Benchmarks_Test
