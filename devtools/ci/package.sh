@@ -18,6 +18,7 @@ if [ -z "${REL_PKG:-}" ]; then
   fi
 fi
 
+
 PKG_NAME="ckb_${TRAVIS_TAG}_${REL_PKG%%.*}"
 ARCHIVE_NAME="ckb_${TRAVIS_TAG}_${REL_PKG}"
 
