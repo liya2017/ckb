@@ -207,7 +207,7 @@ jobs:
       - Benchmarks_Test
       - Integration_Test
     if: |
-       contains('bors', github.actor) && success()
+       contains('bors[bot]', github.actor) && success()
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
