@@ -50,7 +50,10 @@ HREF_PREFIX_RPCERROR = '../enum.RPCError.html#variant.'
 NAME_PREFIX_SELF = '(&self, '
 
 CAMEL_TO_SNAKE_PATTERN = re.compile(r'(?<!^)(?=[A-Z])')
-
+if "CARGO_TARGET_DIR" in os.environ:
+  TARGET_DIR=os.getenv('CARGO_TARGET_DIR')
+else:
+  TARGET_DIR="../target"
 
 def camel_to_snake(name):
     return CAMEL_TO_SNAKE_PATTERN.sub('_', name).lower()
@@ -690,14 +693,14 @@ class RPCDoc(object):
         ]
 
     def collect(self):
-        for path in sorted(glob.glob("target/doc/ckb_rpc/module/trait.*Rpc.html")):
+        for path in sorted(glob.glob(TARGET_DIR+"/doc/ckb_rpc/module/trait.*Rpc.html")):
             module_name = path.split('.')[1][:-3]
             module = RPCModule(module_name)
             self.modules.append(module)
             with open(path) as file:
                 module.feed(file.read())
 
-        with open('target/doc/ckb_rpc/enum.RPCError.html') as file:
+        with open(TARGET_DIR+'/doc/ckb_rpc/enum.RPCError.html') as file:
             self.errors.feed(file.read())
 
         global PENDING_TYPES
@@ -720,7 +723,7 @@ class RPCDoc(object):
     def collect_type(self, path):
         while path.startswith('../'):
             path = path[3:]
-        path = 'target/doc/' + path
+        path = TARGET_DIR+'/doc/' + path
 
         if path in self.parsed_types:
             return
@@ -778,7 +781,8 @@ class RPCDoc(object):
 
 
 def main():
-    if not os.path.exists("target/doc/ckb_rpc/module/index.html"):
+    print("target dir is"+TARGET_DIR)
+    if not os.path.exists(TARGET_DIR+"/doc/ckb_rpc/module/index.html"):
         print("Please run cargo doc first:\n  cargo doc -p ckb-rpc -p ckb-types -p ckb-fixed-hash -p ckb-fixed-hash-core -p ckb-jsonrpc-types --no-deps", file=sys.stderr)
         sys.exit(128)
 
