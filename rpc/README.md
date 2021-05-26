@@ -1,4 +1,3 @@
-target dir is/Users/xuliya/Documents/code/ckb/target
 # CKB JSON-RPC Protocols
 
 <!--**NOTE:** This file is auto-generated from code comments.-->
