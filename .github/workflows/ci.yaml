@@ -126,7 +126,7 @@ jobs:
     if: |
       contains(github.event_name, 'pull_request') ||
       contains(fromJson('[ "refs/heads/master", "refs/heads/trying","refs/heads/staging", "refs/heads/staging2" ]'), github.ref)
-    runs-on: [self-hosted,Linux,X64,centos-runner]
+    runs-on: ubuntu-latest
     # strategy:
     #   matrix:
     #     os: [Linux-runner, mac-runner]
