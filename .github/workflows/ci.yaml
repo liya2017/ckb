@@ -188,7 +188,6 @@ jobs:
     - uses: actions/checkout@v2
     - name: WASM build
       run: |
-        export PATH=/usr/lib/llvm-8/bin:$PATH
         rustup target add wasm32-unknown-unknown
         make wasm-build-test
 
