@@ -696,7 +696,7 @@ class RPCDoc(object):
 
     def collect(self):
         for path in sorted(glob.glob(TARGET_DIR+"/doc/ckb_rpc/module/trait.*Rpc.html")):
-            module_name = path.split('.')[1][:-3]
+            module_name = path.split('trait')[1].split('.')[1][:-3]
             module = RPCModule(module_name)
             self.modules.append(module)
             with open(path) as file:
@@ -726,7 +726,6 @@ class RPCDoc(object):
         while path.startswith('../'):
             path = path[3:]
         path = TARGET_DIR+'/doc/' + path
-
         if path in self.parsed_types:
             return
         self.parsed_types.add(path)
@@ -743,7 +742,7 @@ class RPCDoc(object):
             path = content.split('0;URL=')[1].split('"')[0]
             return self.collect_type(path)
 
-        name = path.split('.')[1]
+        name = path.split('/')[-1].split('.')[1]
         if name not in ['U256', 'RationalU256']:
             parser = RPCType(name, path)
             parser.feed(content)
