@@ -29,7 +29,7 @@ wasm-build-test: ## Build core packages for wasm target
 .PHONY: setup-ckb-test
 setup-ckb-test:
 	cp -f Cargo.lock test/Cargo.lock
-	rm -rf test/target && ln -snf ../${CARGO_TARGET_DIR} test/target
+	rm -rf test/target && ln -snf } test/target
 
 .PHONY: submodule-init
 submodule-init:
@@ -38,11 +38,11 @@ submodule-init:
 .PHONY: integration
 integration: submodule-init setup-ckb-test ## Run integration tests in "test" dir.
 	cargo build --features deadlock_detection
-	RUST_BACKTRACE=1 RUST_LOG=${INTEGRATION_RUST_LOG} test/run.sh -- --bin ../${CARGO_TARGET_DIR}/debug/ckb ${CKB_TEST_ARGS}
+	RUST_BACKTRACE=1 RUST_LOG=${INTEGRATION_RUST_LOG} test/run.sh -- --bin ${CARGO_TARGET_DIR}/debug/ckb ${CKB_TEST_ARGS}
 
 .PHONY: integration-release
 integration-release: submodule-init setup-ckb-test prod
-	RUST_BACKTRACE=1 RUST_LOG=${INTEGRATION_RUST_LOG} test/run.sh --release -- --bin ../${CARGO_TARGET_DIR}/release/ckb ${CKB_TEST_ARGS}
+	RUST_BACKTRACE=1 RUST_LOG=${INTEGRATION_RUST_LOG} test/run.sh --release -- --bin ${CARGO_TARGET_DIR}/release/ckb ${CKB_TEST_ARGS}
 
 ##@ Document
 .PHONY: doc
