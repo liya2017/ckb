@@ -29,7 +29,7 @@ wasm-build-test: ## Build core packages for wasm target
 .PHONY: setup-ckb-test
 setup-ckb-test:
 	cp -f Cargo.lock test/Cargo.lock
-	rm -rf test/target && ln -snf } test/target
+	rm -rf test/target && ln -snf ${CARGO_TARGET_DIR} test/target
 
 .PHONY: submodule-init
 submodule-init:
@@ -56,8 +56,8 @@ doc-deps: ## Build the documentation for the local package and all dependencies.
 .PHONY: gen-rpc-doc
 gen-rpc-doc:  ## Generate rpc documentation
 	rm -f ${CARGO_TARGET_DIR}/doc/ckb_rpc/module/trait.*.html
-	[ ! -h "target" ] && ln -nsf "${CARGO_TARGET_DIR}" "target"
 	cargo doc -p ckb-rpc -p ckb-types -p ckb-fixed-hash -p ckb-fixed-hash-core -p ckb-jsonrpc-types --no-deps
+	ln -snf ${CARGO_TARGET_DIR} target
 	if command -v python3 &> /dev/null; then \
 		python3 ./devtools/doc/rpc.py > rpc/README.md; \
 	else \
