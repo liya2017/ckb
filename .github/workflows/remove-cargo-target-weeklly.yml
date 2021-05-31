@@ -1,0 +1,60 @@
+name: Remove Cargo target hourly
+
+on:
+  schedule:
+    # Every day at 1 am
+    - cron: '0 1 * * *'
+
+env:
+  CARGO_TARGET_DIR: ${{ github.workspace }}/../target
+jobs:
+  remove-old-artifacts:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [Linux-runner,win-runner,mac-runner]
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v2
+    - name: Check disk usausedge on Linux
+      if: runner.os == 'Linux'
+      run: |
+        disk_used=`df -h |head -2 | awk '{print $5}' | sed -n '2,1p'`
+        max_used=60
+        if [[ $(echo ${disk_used%%%}) -gt $max_used ]]; then
+           echo "Free disk space is less than 40%"
+           exit 1
+        else
+           echo "Free disk space is more than 40%"
+           exit 0
+        fi
+
+    - name: Check disk used on Windows
+      if: runner.os == 'Windows'
+      run: |
+        $disk =  Get-PSDrive C | Select-Object @{ E={$_.Used/1GB}; L='Used' }, @{ E={$_.Free/1GB}; L='Free' }
+        if ($disk.Used -gt "200") {
+           echo "Free disk space is less than 40%"
+           exit 1
+        } else {
+          echo "Free disk space is more than 40%"
+          exit 0
+        }
+
+    - name: Check disk usage on macOS
+      if: runner.os == 'macOS'
+      run: |
+        echo "macOS"
+        disk_used=` df -Pk . | sed 1d | grep -v used | awk '{ print $3 "\t" }' `
+        max_used=150000000 #The max_used depends on mac storage
+        if [[ ${disk_used} -gt $max_used ]]; then
+           echo "Free disk space is less than 40%"
+           exit 1
+        else
+           echo "Free disk space is more than 40%"
+           exit 0
+        fi
+    - name: Remove Cargo target weekly
+      if: ${{ failure() }}
+      run: |
+        cargo clean --target-dir ${CARGO_TARGET_DIR}
