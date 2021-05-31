@@ -117,6 +117,7 @@ jobs:
         make check-dirty-hashes-toml
         devtools/ci/check-cyclic-dependencies.py
 
+
   WASM_build:
     if: |
       contains(github.event_name, 'pull_request') ||
