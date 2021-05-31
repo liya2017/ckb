@@ -87,7 +87,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [Linux-runner, mac-runner]
+        os: [Linux-runner]
     steps:
     - uses: actions/checkout@v2
     - name: Linters
