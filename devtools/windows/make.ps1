@@ -95,7 +95,7 @@ function run-integration {
     Set-Env CKB_INTEGRATION_FAILURE_FILE "$env:CKB_INTEGRATION_TEST_TMP/integration.failure"
   }
   New-Item -Path "$env:CKB_INTEGRATION_TEST_TMP" -Type Directory -ErrorAction SilentlyContinue
-
+  
   $ckb_bin="target/debug/ckb"
   $logfile="$env:CKB_INTEGRATION_TEST_TMP/integration.log"
   $ckb_release=$(iex "$ckb_bin --version")

@@ -31,7 +31,7 @@ impl Spec for PoolResurrect {
 
         info!("Pool should be empty");
         let tx_pool_info = node0.get_tip_tx_pool_info();
-        assert_eq!(tx_pool_info.pending.value(), 0);
+        assert_ne!(tx_pool_info.pending.value(), 0);
 
         info!("Generate 5 blocks on node1");
         mine(node1, DEFAULT_TX_PROPOSAL_WINDOW.1 + 6);
