@@ -430,7 +430,7 @@ dependencies = [
  "ckb-logger",
  "ckb-spawn",
  "ckb-stop-handler",
- "tokio 1.6.1",
+ "tokio 1.6.2",
 ]
 
 [[package]]
@@ -547,6 +547,7 @@ dependencies = [
 name = "ckb-chain-spec"
 version = "0.43.0-pre"
 dependencies = [
+ "ckb-constant",
  "ckb-crypto",
  "ckb-dao-utils",
  "ckb-error",
@@ -933,7 +934,7 @@ dependencies = [
  "snap",
  "tempfile",
  "tentacle",
- "tokio 1.6.1",
+ "tokio 1.6.2",
  "tokio-util 0.6.6",
  "trust-dns-resolver",
 ]
@@ -1287,7 +1288,7 @@ dependencies = [
  "ckb-logger",
  "futures 0.1.29",
  "parking_lot 0.7.1",
- "tokio 1.6.1",
+ "tokio 1.6.2",
 ]
 
 [[package]]
@@ -1401,7 +1402,7 @@ dependencies = [
  "ckb-verification",
  "faketime",
  "lru",
- "tokio 1.6.1",
+ "tokio 1.6.2",
 ]
 
 [[package]]
@@ -1477,7 +1478,7 @@ dependencies = [
  "faketime",
  "rand 0.7.3",
  "rayon",
- "tokio 1.6.1",
+ "tokio 1.6.2",
 ]
 
 [[package]]
@@ -4837,7 +4838,7 @@ dependencies = [
  "tentacle-multiaddr",
  "tentacle-secio",
  "thiserror",
- "tokio 1.6.1",
+ "tokio 1.6.2",
  "tokio-util 0.6.6",
  "tokio-yamux",
  "wasm-bindgen",
@@ -4877,7 +4878,7 @@ dependencies = [
  "ring",
  "secp256k1",
  "sha2",
- "tokio 1.6.1",
+ "tokio 1.6.2",
  "tokio-util 0.6.6",
  "unsigned-varint",
  "x25519-dalek",
@@ -5025,9 +5026,9 @@ dependencies = [
 
 [[package]]
 name = "tokio"
-version = "1.6.1"
+version = "1.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0a38d31d7831c6ed7aad00aa4c12d9375fd225a6dd77da1d25b707346319a975"
+checksum = "aea337f72e96efe29acc234d803a5981cd9a2b6ed21655cd7fc21cfe021e8ec7"
 dependencies = [
  "autocfg 1.0.0",
  "bytes 1.0.1",
@@ -5267,7 +5268,7 @@ dependencies = [
  "futures-sink",
  "log",
  "pin-project-lite 0.2.4",
- "tokio 1.6.1",
+ "tokio 1.6.2",
 ]
 
 [[package]]
@@ -5280,7 +5281,7 @@ dependencies = [
  "futures 0.3.12",
  "log",
  "nohash-hasher",
- "tokio 1.6.1",
+ "tokio 1.6.2",
  "tokio-util 0.6.6",
 ]
 
