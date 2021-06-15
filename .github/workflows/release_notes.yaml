@@ -1,0 +1,48 @@
+# This is a basic workflow that is manually triggered
+
+name: Manual workflow Test
+
+# Controls when the action will run. Workflow runs when manually triggered using the UI
+# or API.
+on:
+  workflow_dispatch:
+    # Inputs the workflow accepts.
+    inputs:
+      name:
+        # Friendly description to be shown in the UI instead of 'name'
+        description: 'Person to greet'
+        # Default value if no value is explicitly provided
+        default: 'World'
+        # Input has to be provided for the workflow to run
+        required: true
+      # logLevel:
+      #   description: 'Log level'     
+      #   required: true
+      #   default: 'warning'
+env:
+  CARGO_TARGET_DIR: "${{ github.workspace }}/../target"
+jobs:
+  Benchmarks_Test:
+    name: Build Modified CKB
+    runs-on: [ self-hosted, Linux, X64, package-for-linux ]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.WORKFLOW_TOKEN }}
+          event-type: do-something
+          client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}"}'
+      - name: Wait on Benchmark
+        uses: lewagon/wait-on-check-action@master
+        with:
+          ref: ${{ github.ref }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 30
+          running-workflow-name: 'Benchmark'
+      - name: Download math result for job 1
+        uses: actions/download-artifact@v2
+        with:
+          path: artifacts
+      - run: |
+          ls
