@@ -1,0 +1,237 @@
+# This is a basic workflow that is manually triggered
+name: Manual workflow Test
+
+# Controls when the action will run. Workflow runs when manually triggered using the UI
+# or API.
+on:
+  workflow_dispatch:
+    # Inputs the workflow accepts.
+    inputs:
+      name:
+        # Friendly description to be shown in the UI instead of 'name'
+        description: 'Person to greet'
+        # Default value if no value is explicitly provided
+        default: 'World'
+        # Input has to be provided for the workflow to run
+        required: true
+      # logLevel:
+      #   description: 'Log level'     
+      #   required: true
+      #   default: 'warning'
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  build_modified_ckb:
+    name: Build Modified CKB
+    runs-on: [ self-hosted, Linux, X64, building ]
+    env:
+      CARGO_TARGET_DIR: "${{ github.workspace }}/../target"
+    steps:
+      - uses: actions/checkout@v2
+      - name: Modify Consensus Parameters And Build CKB
+        run: |
+          sed -i 's/const TWO_IN_TWO_OUT_COUNT: u64 = .*;$/const TWO_IN_TWO_OUT_COUNT: u64 = 8_000;/g'            spec/src/consensus.rs
+          sed -i 's/const MAX_BLOCK_PROPOSALS_LIMIT: u64 = .*;$/const MAX_BLOCK_PROPOSALS_LIMIT: u64 = 12_000;/g' spec/src/consensus.rs
+          make build
+          cd ${{ env.CARGO_TARGET_DIR }}/release
+          tar cfJ ckb.tar.xz ckb
+          mv ckb.tar.xz ${{ github.workspace }}
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ckb.tar.xz
+          path: ckb.tar.xz
+
+  Benchmarks_Test:
+    # The type of runner that the job will run on
+    runs-on: [ self-hosted, Linux, X64, operating ]
+    needs: [ build_modified_ckb ]
+    strategy:
+      matrix:
+        repeat: [1, 2, 3, 4, 5, 6, 7, 8]
+    continue-on-error: true
+    concurrency:
+      group: Benchmarks_Test_${{matrix.repeat}}
+      cancel-in-progress: true
+    env:
+      TERRAFORM_DIR:     ${{ github.workspace }}/.github/workflows/benchmark/terraform
+      ANSIBLE_DIR:       ${{ github.workspace }}/.github/workflows/benchmark/ansible
+      ANSIBLE_INVENTORY: ${{ github.workspace }}/.github/workflows/benchmark/ansible/inventory.yml
+      PRIVATE_KEY_PATH:  ${{ github.workspace }}/id_rsa
+      PUBLIC_KEY_PATH:   ${{ github.workspace }}/id_rsa.pub
+    steps:
+      - uses: actions/checkout@v2
+      - name: Prepare - Download CKB Tarball
+        uses: actions/download-artifact@v2
+        with:
+          name: ckb.tar.xz
+
+      # Prepare
+      - name: Prepare - Generate Random SSH Key
+        run: ssh-keygen -N "" -f ${{ env.PRIVATE_KEY_PATH }}
+      - name: Prepare - Apply Resources Based on Terraform Files
+        uses: ./.github/actions/terraform
+        env:
+          # Environment variables used inside terraform/variables.tf
+          TF_VAR_access_key: ${{ secrets.AWS_ACCESS_KEY }}
+          TF_VAR_secret_key: ${{ secrets.AWS_SECRET_KEY }}
+          TF_VAR_prefix: benchmark-${{ github.repository }}-${{ github.run_id }}
+          TF_VAR_instances_count: 3
+          TF_VAR_instance_type: c5.xlarge
+          TF_VAR_instance_type_bastion: t2.xlarge
+          TF_VAR_private_key_path: ${{ env.PRIVATE_KEY_PATH }}
+          TF_VAR_public_key_path: ${{ env.PUBLIC_KEY_PATH }}
+        with:
+          terraform_dir: ${{ env.TERRAFORM_DIR }}
+      - name: Prepare - Output Ansible Inventory Based on Terraform State
+        working-directory: ${{ env.TERRAFORM_DIR }}
+        run: |
+          # `ansible_hosts` is defined in terraform/main.tf
+          terraform output -raw ansible_hosts > ${{ env.ANSIBLE_INVENTORY }}
+          terraform output -raw ansible_hosts
+
+      # Run
+      - name: Run Ansible Playbook
+        shell: bash
+        working-directory: ${{ env.ANSIBLE_DIR }}
+        env:
+          ANSIBLE_PRIVATE_KEY_FILE:  ${{ env.PRIVATE_KEY_PATH }}
+        run: |
+          ansible-galaxy install --roles-path roles --role-file requirements.yml
+
+          # Install CKB on group instance
+          ansible-playbook playbook.yml \
+            -e 'hostname=instances' \
+            -e 'ckb_local_source=${{ github.workspace  }}/ckb.tar.xz' \
+            -t ckb_install,ckb_configure
+
+          # Install CKB-Benchmark on hosts bastion-0
+          ansible-playbook playbook.yml -e 'hostname=bastions'  -t ckb_benchmark_install,ckb_benchmark_configure
+
+          # Connect all CKB nodes into a network.
+          #
+          # In order to resolve network issues caused by IBD, we allowed instance-0 out
+          # of IBD, then restarted the other nodes to allow them to connect.
+          ansible-playbook playbook.yml -e 'hostname=instances'  -t ckb_stop
+          ansible-playbook playbook.yml -e 'hostname=instance-0' -t ckb_start
+          ansible-playbook playbook.yml -e 'hostname=instance-0' -t ckb_miner_start
+          sleep 5
+          ansible-playbook playbook.yml -e 'hostname=instance-0' -t ckb_miner_stop
+          ansible-playbook playbook.yml -e 'hostname=instances'  -t ckb_start
+
+          # Start benchmark
+          ansible-playbook playbook.yml -e 'hostname=bastions'   -t ckb_benchmark_start
+
+          # Fetch and process result
+          # It will produce `report.yml`, `metrics.yml` and `result.tar.xz`
+          ansible-playbook playbook.yml -e 'hostname=bastions'   -t fetch_ckb_benchmark_logfiles
+          ansible-playbook playbook.yml -e 'hostname=instances'  -t fetch_ckb_logfiles
+          ansible-playbook playbook.yml -e 'hostname=instances'  -t process_result
+      - name: Upload math result Benchmarks_Test
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v1
+        with:
+        #  name: homework_${{matrix.repeat}}_${{matrix.os}}
+         name: Benchmarks_Test_${{matrix.os}}_${{matrix.repeat}}_result.tar.xz
+         path: ${{ env.ANSIBLE_DIR }}/result.tar.xz
+         
+  build_ckb_for_Sync_Mainnet:
+    name: Build CKB
+    runs-on: [ self-hosted, Linux, X64, building ]
+    needs: [Benchmarks_Test]
+    env:
+      CARGO_TARGET_DIR: "${{ github.workspace }}/../target"
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build CKB
+        run: |
+          make build
+          cd ${{ env.CARGO_TARGET_DIR }}/release
+          tar cfJ ckb.tar.xz ckb
+          mv ckb.tar.xz ${{ github.workspace }}
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ckb.tar.xz
+          path: ckb.tar.xz
+  Sync-Mainnet:
+    name: Sync-Mainnet
+    runs-on: [ self-hosted, Linux, X64, operating ]
+    needs: [ build_ckb_for_Sync_Mainnet ]
+    strategy:
+      matrix:
+        repeat: [1, 2, 3, 4, 5, 6, 7, 8]
+    continue-on-error: true
+    concurrency:
+      group: Sync-Mainnet_${{matrix.repeat}}
+      cancel-in-progress: true
+    env:
+      TERRAFORM_DIR:     ${{ github.workspace }}/.github/workflows/sync/terraform
+      ANSIBLE_DIR:       ${{ github.workspace }}/.github/workflows/sync/ansible
+      ANSIBLE_INVENTORY: ${{ github.workspace }}/.github/workflows/sync/ansible/inventory.yml
+      PRIVATE_KEY_PATH:  ${{ github.workspace }}/id_rsa
+      PUBLIC_KEY_PATH:   ${{ github.workspace }}/id_rsa.pub
+    steps:
+      - uses: actions/checkout@v2
+      - name: Prepare - Download CKB Tarball
+        uses: actions/download-artifact@v2
+        with:
+          name: ckb.tar.xz
+
+      # Prepare
+      - name: Prepare - Generate Random SSH Key
+        run: ssh-keygen -N "" -f ${{ env.PRIVATE_KEY_PATH }}
+      - name: Prepare - Apply Resources Based on Terraform Files
+        uses: ./.github/actions/terraform
+        env:
+          # Environment variables used inside terraform/variables.tf
+          TF_VAR_access_key: ${{ secrets.AWS_ACCESS_KEY }}
+          TF_VAR_secret_key: ${{ secrets.AWS_SECRET_KEY }}
+          TF_VAR_prefix: sync-${{ github.repository }}-${{ github.run_id }}
+          TF_VAR_instance_type: c5.xlarge
+          TF_VAR_private_key_path: ${{ env.PRIVATE_KEY_PATH }}
+          TF_VAR_public_key_path: ${{ env.PUBLIC_KEY_PATH }}
+        with:
+          terraform_dir: ${{ env.TERRAFORM_DIR }}
+      - name: Prepare - Output Ansible Inventory Based on Terraform State
+        working-directory: ${{ env.TERRAFORM_DIR }}
+        run: |
+          terraform output | grep -v EOT > ${{ env.ANSIBLE_INVENTORY }}
+          terraform output | grep -v EOT
+
+      # Run
+      - name: Run Ansible Playbook
+        shell: bash
+        working-directory: ${{ env.ANSIBLE_DIR }}
+        env:
+          QINIU_ACCESS_KEY:         ${{ secrets.QINIU_ACCESS_KEY }}
+          QINIU_SECRET_KEY:         ${{ secrets.QINIU_SECRET_KEY }}
+          ANSIBLE_PRIVATE_KEY_FILE: ${{ env.PRIVATE_KEY_PATH }}
+        run: |
+          ansible-galaxy install --roles-path roles --role-file requirements.yml
+
+          ansible-playbook playbook.yml \
+            -e 'ckb_local_source=${{ github.workspace  }}/ckb.tar.xz' \
+            -t ckb_install,ckb_configure
+          ansible-playbook playbook.yml -t ckb_restart
+          ansible-playbook playbook.yml -t wait_ckb_synchronization
+          ansible-playbook playbook.yml -t fetch_ckb_logfiles
+          # Will produce report.yml within ANSIBLE_DIR
+          ansible-playbook playbook.yml -t process_result
+      - name: Post Run - Upload Result `result.tar.xz`
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v2
+        with:
+         name: Sync-Mainnet_${{matrix.os}}_${{matrix.repeat}}_result.tar.xz
+         path: ${{ env.ANSIBLE_DIR }}/result.tar.xz
+
+  Get-logs:
+    name: get logs
+    needs: [Benchmarks_Test,Sync-Mainnet]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download math result for job 1
+        uses: actions/download-artifact@v2
+        with:
+          path: artifacts
+      - run: |
+          pwd
+          ls
