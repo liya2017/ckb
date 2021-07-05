@@ -245,6 +245,6 @@ jobs:
     steps:
       - uses: peter-evans/repository-dispatch@v1
         with:
-          token: ${{ secrets.REPO_ACCESS_TOKEN }}
+          token: ${{ secrets.WORKFLOW_TOKEN }}
           event-type: unit-tests-checks
           client-payload: ${{ toJSON(github.event.client_payload) }}

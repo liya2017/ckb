@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: peter-evans/repository-dispatch@v1
         with:
-          token: ${{ secrets.REPO_ACCESS_TOKEN }}
+          token: ${{ secrets.WORKFLOW_TOKEN }}
           event-type: ${{ github.event.client_payload.slash_command.args.unnamed.arg1 }}
           client-payload: |
             {

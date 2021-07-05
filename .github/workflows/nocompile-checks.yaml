@@ -81,11 +81,11 @@ jobs:
     steps:
       - uses: peter-evans/repository-dispatch@v1
         with:
-          token: ${{ secrets.REPO_ACCESS_TOKEN }}
+          token: ${{ secrets.WORKFLOW_TOKEN }}
           event-type: basic-checks
           client-payload: ${{ toJSON(github.event.client_payload) }}
       - uses: peter-evans/repository-dispatch@v1
         with:
-          token: ${{ secrets.REPO_ACCESS_TOKEN }}
+          token: ${{ secrets.WORKFLOW_TOKEN }}
           event-type: build-checks
           client-payload: ${{ toJSON(github.event.client_payload) }}
