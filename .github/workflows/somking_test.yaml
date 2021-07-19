@@ -1,0 +1,26 @@
+name: Smoking test suit
+
+on:
+  workflow_dispatch:
+env:
+  RUSTFLAGS: "-D warnings"
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: full
+  TESTNET_DATA_SNAPSHOT: ${{secrets.TESTNET_DATA_SNAPSHOT}}
+  CARGO_TARGET_DIR: ${{ github.workspace }}/../target
+
+jobs:
+   Start_and_sync:
+    runs-on: [self-hosted,Linux]
+    steps:
+    - uses: actions/checkout@v2
+    - name: build
+      run: |
+        cargo build --release
+    - name: Download&Unzip testnet data sanpshot
+      run: |
+        wget -c ${TESTNET_DATA_SNAPSHOT} && tar -xzf testnet-data.tar.gz
+    - name: check the unzip Files
+      run: |
+        pwd
+        ls
