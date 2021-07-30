@@ -7,7 +7,7 @@ fi
 
 PKG_DIR="$( cd "$( dirname "$1" )" >/dev/null 2>&1 && pwd )"
 PKG_NAME="$(basename "$1")"
-
+echo "$PKG_NAME"
 mkdir -p releases
 rm -f "releases/$PKG_NAME.7z"
 7z a -r "releases/$PKG_NAME.7z" "$PKG_DIR/$PKG_NAME"
