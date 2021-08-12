@@ -1,0 +1,66 @@
+name: ci_dispatch
+
+concurrency:
+  group: ci_dispatch-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  # pull_request:
+  #   types: [ opened, synchronize, reopened ]
+  push:
+    branches:
+      - master
+      - develop
+      - trying
+      - staging
+      - 'rc/*'
+      - ci_dispatch
+env:
+  CI_RUNS_ON: ${{secrets.CI_RUNS_ON}}
+
+jobs:
+  check-runs-on:
+    name: check-runs-on
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        run: |
+          runs_on=''
+          nervosnetwork_actor_list='"janx", "doitian", "quake", "xxuejie", "zhangsoledad", "jjyr", "TheWaWaR", "driftluo", "keroro520", "yangby-cryptape"'
+          actor="${{github.actor}}"
+          if [[ "${{github.event.head_commit.message}}" == *"runs-on:"* ]]; then
+            runs_on=`echo "${{github.event.head_commit.message}}"|awk -F 'runs-on:' '{print $2}' | awk -F ']' '{print $1}'`
+            runs_on=$runs_on' ]'
+            echo "runs_on 1 is "$runs_on
+          fi
+          if [[ -n ${{env.CI_RUNS_ON}} ]]; then
+            runs_on='${{env.CI_RUNS_ON}}'
+            echo "runs_on 2 is "$runs_on
+          fi
+          if [[ ${{github.repository_owner}} != "nervosnetwork" ]] || [[ ${{github.repository_owner}} == "nervosnetwork" && ${{github.event_name}} == 'pull_request' && $nervosnetwork_actor_list != *$actor* ]]; then 
+            runs_on='[ "ubuntu-18.04","macos-10.15","windows-2019" ]'
+            echo "runs_on 3 is "$runs_on
+          fi
+          echo  "runs_on final is "$runs_on
+          echo "::set-output name=matrix::{\"os\":[\"ubuntu-18.04\",\"macos-10.15\"]}"
+  get-runs-on:
+    name: get-runs-on
+    needs: check-runs-on
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{fromJSON(needs.check-runs-on.outputs.matrix)}} 
+    steps:
+    - name: echo check-runs-on out put
+      run: echo  ${{fromJSON(needs.check-runs-on.outputs.matrix)}}
+    - name: trigger unit test
+      run: |
+       echo ${{ github.event.client_payload.github.sha }}
+       curl \
+          -X POST \
+          -H "Accept: application/vnd.github.v3+json" \
+          https://github.com/${{github.repository}}/actions/workflows/ci_dispatch_unit_test.yaml/dispatches \
+          -d '{"ref":"'${{ github.event.client_payload.github.sha }}'", "inputs": { "reason":"'${{fromJSON(needs.check-runs-on.outputs.matrix)}}'" }}'
+    
+

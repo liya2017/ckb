@@ -1,0 +1,29 @@
+name: ci_dispatch_unit_test
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'OS Matrix to Run the Workflow, separated by comma.'
+        required: true
+        default: ubuntu-18.04
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: full
+  RUSTFLAGS: -D warnings
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ${{ github.event.inputs.reason }}
+      fail-fast: true
+      max-parallel: 10
+    steps:
+      - name: echo inputs
+        run: |
+          echo ${{ github.event.inputs.reason }}
+
