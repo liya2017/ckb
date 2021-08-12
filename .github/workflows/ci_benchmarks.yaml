@@ -1,0 +1,65 @@
+name: ci_benchmarks
+
+on:
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+  push:
+    branches:
+      - "refine_ci"
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: full
+
+jobs:
+  ci_benchmarks_test:
+    name: ci_benchmarks_test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04,macos-10.15]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Benchmarks_Test
+      run: |
+        make bench-test
+    - uses: doitian/available-space@v1
+      if: ${{ always() }}
+      with:
+        clean-threshold: 40000
+        clean: cargo clean --target-dir "${CARGO_TARGET_DIR}" || true
+  check_runs:
+    if: ${{ always() }}
+    name: check_runs
+    runs-on: ubuntu-20.04
+    needs: ci_benchmarks_test
+    steps:
+    - uses: actions/checkout@v2
+    - name: install python requirements
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - run: |
+        pip install requests
+        pip install datetime
+        pip install python-dotenv
+    - name: Do check suite 
+      id: check_suit
+      run: |
+        python3 ${{ github.workspace }}/devtools/ci/check_runs.py ${{ github.sha }} ${{secrets.WORKFLOW_TOKEN}} > result.log
+        cat result.log
+        CI_conclusion=`cat result.log | grep "CI_conclusion" | awk -F ':' '{print $2}'`
+        required_jobs_count=`cat result.log | grep "required_jobs_count" | awk -F ':' '{print $2}'`
+        echo "====="
+        echo $CI_conclusion
+        echo "::set-output name=CI_conclusion::${CI_conclusion}"
+        echo "::set-output name=required_jobs_count::${required_jobs_count}"
+    # - name: echo CI_conclusion
+    #   if: ${{ steps.check_suit.outputs.CI_conclusion != '' && steps.check_suit.outputs.required_jobs_count == '4' }}
+    #   uses: peter-evans/repository-dispatch@v1
+    #   with:
+    #     token: ${{ secrets.REPO_ACCESS_TOKEN }}
+    #     event-type: ci-dispatch
+    #     client-payload: '{"sha": "${{ github.sha }}", "state": "${{ steps.check_suit.outputs.CI_conclusion }}"}'  
+    env:
+      workspace: ${{ github.workspace }}
