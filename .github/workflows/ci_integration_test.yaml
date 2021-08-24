@@ -7,7 +7,7 @@ on:
     types: [ opened, synchronize, reopened ]
   push:
     branches:
-      - main
+      - master
       - develop
       - trying
       - staging
@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: set-output
-        id: set-matrix 
+        id: set-matrix
         run: |
           runs_on=`${{github.workspace}}/devtools/ci/ci_prologue.sh`
           echo $runs_on
@@ -37,30 +37,33 @@ jobs:
     needs: prologue
     runs-on: ${{ matrix.os }}
     strategy:
-      matrix: ${{fromJSON(needs.prologue.outputs.matrix)}} 
+      matrix: ${{fromJSON(needs.prologue.outputs.matrix)}}
     steps:
     - uses: actions/checkout@v2
-    - name: ci_integration_test
-      if: ${{ runner.os }} == 'Linux' || ${{ runner.os }} == 'macOS'
+    - if: ${{ runner.os == 'Windows' }}
       run: |
-        cargo fmt --version ||  rustup component add rustfmt
-        cargo clippy --version ||  rustup component add clippy
-        make fmt
-        make clippy
-        git diff --exit-code Cargo.lock
+        iex (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
+        echo "$env:USERPROFILE\scoop\shims" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        echo "${{ github.workspace }}\devtools\windows" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        scoop install git
+        scoop bucket add extras
+        scoop install llvm yasm
+    - if: ${{ runner.os  == 'Linux' }} || ${{ runner.os  == 'macOS' }}
+      run: |
+        make CKB_TEST_SEC_COEFFICIENT=5 CKB_TEST_ARGS="-c 4 --no-report" integration
+    - if: ${{ runner.os  == 'Windows' }}
+      run: |
+        devtools/windows/make CKB_TEST_SEC_COEFFICIENT=5 CKB_TEST_ARGS="-c 4 --no-report" integration
     - name: ci_epilogue
       if: always()
       uses: actions/setup-python@v2
       with:
         python-version: 3.8
     - run: |
-        pip install requests
-        pip install datetime
-        pip install python-dotenv
-        pip install PyGithub
+        pip install -r ${{ github.workspace }}/devtools/ci/requirements.txt
         python3 ${{ github.workspace }}/devtools/ci/ci_epilogue.py > result.log
         cat result.log
-    env: 
+    env:
       COMMIT_MESSAGE: ${{github.event.head_commit.message}}
       ACTOR: ${{github.actor}}
       CI_RUNS_ON: ${{secrets.CI_RUNS_ON}}

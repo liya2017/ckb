@@ -7,7 +7,7 @@ on:
     types: [ opened, synchronize, reopened ]
   push:
     branches:
-      - main
+      - master
       - develop
       - trying
       - staging
@@ -28,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: set-output
-        id: set-matrix 
+        id: set-matrix
         run: |
           runs_on=`${{github.workspace}}/devtools/ci/ci_prologue.sh`
           echo $runs_on
@@ -38,7 +38,7 @@ jobs:
     needs: prologue
     runs-on: ${{ matrix.os }}
     strategy:
-      matrix: ${{fromJSON(needs.prologue.outputs.matrix)}} 
+      matrix: ${{fromJSON(needs.prologue.outputs.matrix)}}
     steps:
     - uses: actions/checkout@v2
     - if: ${{ runner.os == 'Windows' }}
@@ -55,10 +55,7 @@ jobs:
       with:
         python-version: 3.8
     - run: |
-        pip install requests
-        pip install datetime
-        pip install python-dotenv
-        pip install PyGithub
+        pip install -r ${{ github.workspace }}/devtools/ci/requirements.txt
         python3 ${{ github.workspace }}/devtools/ci/ci_epilogue.py > result.log
         cat result.log
     env:
