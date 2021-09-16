@@ -35,9 +35,9 @@ ci_integration_tests*)
     rm -rf test/target && ln -snf ${CARGO_TARGET_DIR} test/target
     cd test
     if [[ $github_workflow_os == 'windows' ]];then
-      cargo run -- --bin ${CARGO_TARGET_DIR}/debug/ckb.exe --log-file target/integration.log ${CKB_TEST_ARGS}
+      devtools/windows/make CKB_TEST_SEC_COEFFICIENT=5 CKB_TEST_ARGS="-c 4 --no-report" integration
     else
-      cargo run -- --bin ${CARGO_TARGET_DIR}/debug/ckb --log-file target/integration.log ${CKB_TEST_ARGS}
+      make CKB_TEST_SEC_COEFFICIENT=5 CKB_TEST_ARGS="-c 4 --no-report" integration
     fi
     EXIT_CODE="${PIPESTATUS[0]}"
     ;;
