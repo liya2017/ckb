@@ -6,6 +6,7 @@ if [[ $is_self_runner == "self" ]];then
   CARGO_TARGET_DIR=$GITHUB_WORKSPACE/../target
 fi
 CARGO_TARGET_DIR=${CARGO_TARGET_DIR:-"$GITHUB_WORKSPACE/target"}
+# export SCCACHE_DIR=$CARGO_TARGET_DIR
 case $GITHUB_WORKFLOW in
   ci_linters*)
     echo "Hellow ci_linters!"
@@ -30,7 +31,7 @@ ci_integration_tests*)
     echo "ci_integration_test"
     github_workflow_os=`echo $GITHUB_WORKFLOW | awk -F '_' '{print $NF}'`
     make submodule-init
-    cp -f Cargo.lock test/Cargo.lock
+    cp -f $GITHUB_WORKSPACE/Cargo.lock test/Cargo.lock
     rm -rf test/target && ln -snf ${CARGO_TARGET_DIR} test/target
     cargo build --release --features deadlock_detection --target-dir $CARGO_TARGET_DIR
     git diff --exit-code Cargo.lock
@@ -39,6 +40,22 @@ ci_integration_tests*)
       cargo run -- --bin ${CARGO_TARGET_DIR}/release/ckb.exe --log-file target/integration.log ${CKB_TEST_ARGS}
     else
       cargo run -- --bin ${CARGO_TARGET_DIR}/release/ckb --log-file target/integration.log ${CKB_TEST_ARGS}
+    fi
+    EXIT_CODE="${PIPESTATUS[0]}"
+    ;;
+ci_integration_reseach_test*)
+    echo "ci_integration_reseach_test"
+    github_workflow_os=`echo $GITHUB_WORKFLOW | awk -F '_' '{print $NF}'`
+    make submodule-init
+    cp -f $GITHUB_WORKSPACE/Cargo.lock test/Cargo.lock
+    rm -rf $GITHUB_WORKSPACE/test/target && ln -snf ${CARGO_TARGET_DIR} $GITHUB_WORKSPACE/test/target
+    cargo build --features deadlock_detection --target-dir $CARGO_TARGET_DIR
+    git diff --exit-code $GITHUB_WORKSPACE/Cargo.lock
+    cd test
+    if [[ $github_workflow_os == 'windows' ]];then
+      cargo run -- --bin ${CARGO_TARGET_DIR}/debug/ckb.exe --log-file target/integration.log ${CKB_TEST_ARGS}
+    else
+      cargo run -- --bin ${CARGO_TARGET_DIR}/debug/ckb --log-file target/integration.log ${CKB_TEST_ARGS}
     fi
     EXIT_CODE="${PIPESTATUS[0]}"
     ;;
@@ -69,4 +86,5 @@ ci_integration_tests*)
     echo -n "unknown"
     ;;
 esac
+
 exit $EXIT_CODE
