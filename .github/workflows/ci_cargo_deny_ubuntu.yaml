@@ -49,6 +49,7 @@ jobs:
       run: |
         if [[ ${{ needs.prologue.outputs.os_skip }} == run ]] && [[ ${{ needs.prologue.outputs.job_skip }} == run ]];then
             devtools/ci/ci_main.sh
+            ls -al
         else
           echo "skip job"
           exit 0

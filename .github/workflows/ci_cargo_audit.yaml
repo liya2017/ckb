@@ -1,0 +1,24 @@
+name: cargo_audit
+concurrency:
+  group: cargo_audit-${{ github.ref }}
+  cancel-in-progress: true
+on:
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+  push:
+    branches:
+      - 'audit_check_test'
+
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: full
+  RUSTFLAGS: -D warnings
+jobs:
+  ci_cargo_audit:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions-rs/audit-check@v1
+      with:
+        token: ${{ secrets.WORKFLOW_TOKEN }}
