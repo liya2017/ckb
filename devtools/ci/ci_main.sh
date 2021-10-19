@@ -6,7 +6,7 @@ available_space=`df -m "$GITHUB_WORKSPACE" | tail -1 | awk '{print $4}'`
 echo "available_space is "$available_space
 echo "RUNNER_LABEL is " $RUNNER_LABEL
 if [[ $is_self_runner == "self" ]];then
-  CARGO_TARGET_DIR=$GITHUB_WORKSPACE/../target
+  export CARGO_TARGET_DIR=$GITHUB_WORKSPACE/../target
   #clean space when disk full
   if [[ $available_space -lt $clean_threshold ]]; then
           echo "Run clean command"
