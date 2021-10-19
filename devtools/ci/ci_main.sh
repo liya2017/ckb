@@ -3,6 +3,8 @@ set -euo pipefail
 is_self_runner=`echo $RUNNER_LABEL | awk -F '-' '{print $1}'`
 clean_threshold=40000
 available_space=`df -m "$GITHUB_WORKSPACE" | tail -1 | awk '{print $4}'`
+echo "available_space is "$available_space
+echo "RUNNER_LABEL is " $RUNNER_LABEL
 if [[ $is_self_runner == "self" ]];then
   CARGO_TARGET_DIR=$GITHUB_WORKSPACE/../target
   #clean space when disk full
@@ -12,6 +14,7 @@ if [[ $is_self_runner == "self" ]];then
   fi
 fi
 CARGO_TARGET_DIR=${CARGO_TARGET_DIR:-"$GITHUB_WORKSPACE/target"}
+echo "CARGO_TARGET_DIR is "$CARGO_TARGET_DIR
 EXIT_CODE=0
 case $GITHUB_WORKFLOW in
   ci_linters*)
