@@ -55,7 +55,8 @@ jobs:
         scoop install llvm yasm
     - run: |
         if [[ ${{ needs.prologue.outputs.os_skip }} == run ]] && [[ ${{ needs.prologue.outputs.job_skip }} == run ]];then
-            devtools/ci/ci_main.sh
+            # devtools/ci/ci_main.sh
+            devtools/windows/make CKB_TEST_SEC_COEFFICIENT=5 CKB_TEST_ARGS="-c 4 --no-report" integration
         else
           echo "skip job"
           exit 0
