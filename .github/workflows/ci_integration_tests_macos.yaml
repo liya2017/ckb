@@ -54,7 +54,7 @@ jobs:
       shell: bash
     - uses: actions/upload-artifact@v2
       with:
-        name: Integration Logs (${{ runner.os }}, ${{ matrix.os }})
-        path: ${{ github.workspace }}/integration.log
+        name: macos_integration.log
+        path: ${{ env.CKB_INTEGRATION_TEST_TMP }}/integration.log
     env:
       RUNNER_LABEL: ${{ needs.prologue.outputs.runner_label }}
