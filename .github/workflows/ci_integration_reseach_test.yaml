@@ -1,0 +1,39 @@
+name: ci_integration_reseach_test
+concurrency:
+  group: ci_integration_reseach_test-${{ github.ref }}
+  cancel-in-progress: true
+on:
+  pull_request:
+    types: [labeled ]
+  # push:
+  #   branches:
+  #     - master
+  #     - develop
+  #     - trying
+  #     - staging
+  #     - 'rc/*'
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: full
+  RUSTFLAGS: -D warnings
+  RUST_LOG: info,ckb_test=debug,ckb_sync=debug,ckb_relay=debug,ckb_network=debug
+  CKB_TEST_SEC_COEFFICIENT: 5
+  CKB_TEST_ARGS: -c 4 --no-report --no-fail-fast
+  # RUSTC_WRAPPER: sccache
+  # SCCACHE_CACHE_SIZE: 2G
+jobs:
+  ci_integration_reseach_test:
+    name: ci_integration_reseach_test
+    timeout-minutes: 70
+    runs-on: self-hosted-ci-ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - run: |
+           devtools/ci/ci_main.sh
+      shell: bash
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Integration Logs (${{ runner.os }}, ${{ matrix.os }})
+        path: target/integration.log
+    env:
+      RUNNER_LABEL: self-hosted-ci-ubuntu-20.04
