@@ -20,7 +20,7 @@ env:
   CKB_TEST_SEC_COEFFICIENT: 5
   CKB_TEST_ARGS: -c 4 --no-report --no-fail-fast
   RUSTC_WRAPPER: sccache
-  SCCACHE_CACHE_SIZE: 2G
+  SCCACHE_CACHE_SIZE: 4G
 jobs:
   ci_integration_tests_reseach:
     name: ci_integration_tests_reseach
