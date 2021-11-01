@@ -24,7 +24,13 @@ fun_jobs(){
   echo "$job_list" | sed "s/\[//g" | sed "s/\]//g" | sed "s/,/\n/g" > job_run.txt
   while read -r LINE;
   do
-    LINE="ci_"$(echo "$LINE" | sed -e 's/\r//g')
+    # LINE="ci_"$(echo "$LINE" | sed -e 's/\r//g')
+    # LINE=$(echo "$LINE" | sed -e 's/\r//g')
+    LINE="ci_$(echo "$LINE" | tr -d '[:space:]')"
+    JOB_LINE=`echo "$LINE" | tr -d '[:space:]'`
+    echo "job run:" $LINE
+    echo "JOB_LINE run:" $JOB_LINE
+    echo "GITHUB_WORKFLOW is:"$GITHUB_WORKFLOW
     if [[ $GITHUB_WORKFLOW == "$LINE"* ]];then
       echo "job_name is"$LINE
       echo $GITHUB_WORKFLOW
@@ -109,5 +115,3 @@ if [[ $GITHUB_EVENT_NAME == "pull_request" ]];then
     fi
   fi
 fi
-
-
