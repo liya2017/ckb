@@ -1,5 +1,13 @@
 #!/bin/bash
 set -euo pipefail
+if [[ $RUNNER_LABEL == 'windows-2019' ]];then
+  iex (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
+  echo "$env:USERPROFILE\scoop\shims" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+  echo "${{ github.workspace }}\devtools\windows" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+  scoop install git
+  scoop bucket add extras
+  scoop install llvm yasm
+fi
 is_self_runner=`echo $RUNNER_LABEL | awk -F '-' '{print $1}'`
 clean_threshold=40000
 available_space=`df -m "$GITHUB_WORKSPACE" | tail -1 | awk '{print $4}'`
