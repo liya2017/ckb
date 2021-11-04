@@ -16,6 +16,8 @@ env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: full
   RUSTFLAGS: -D warnings
+  RUSTC_WRAPPER: sccache
+  SCCACHE_CACHE_SIZE: 2G
 jobs:
   prologue:
     name: prologue
@@ -40,10 +42,35 @@ jobs:
   ci_linters_macos:
     name: ci_linters_macos
     needs: prologue
-    runs-on: macos-11
+    runs-on: macos-latest
     steps:
+    - name: Install sccache (macos-latest)
+      run: |
+        brew upgrade
+        brew update
+        brew install sccache
+    - name: Cache cargo registry
+      uses: actions/cache@v2
+      continue-on-error: false
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+            ${{ runner.os }}-cargo-
+    - name: Save sccache
+      uses: actions/cache@v2
+      continue-on-error: false
+      with:
+        path: /Users/runner/Library/Caches/Mozilla.sccache
+        key: ${{ runner.os }}-sccache-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-sccache-
     - uses: actions/checkout@v2
     - run: |
+        cargo --help
+        ls -al /Users/runner/Library/Caches/Mozilla.sccache
         brew install grep gnu-sed
         if [[ ${{ needs.prologue.outputs.os_skip }} == run ]] && [[ ${{ needs.prologue.outputs.job_skip }} == run ]];then
             devtools/ci/ci_main.sh
