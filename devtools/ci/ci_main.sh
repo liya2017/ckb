@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euo pipefail
-if [[ $RUNNER_LABEL == 'windows-2019' ]];then
+echo "RUNNER_LABEL is " $RUNNER_LABEL
+if [[ $RUNNER_LABEL == "windows-2019" ]];then
+   echo "test"
   iex (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
   echo "$env:USERPROFILE\scoop\shims" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
   echo "${{ github.workspace }}\devtools\windows" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
