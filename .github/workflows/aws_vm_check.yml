@@ -1,0 +1,50 @@
+name: AWS VM check
+on:
+  push:
+    branches: ['usless_vm_check']
+# env:
+#   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
+#   AWS_SECRET_ACCESS_KEY: ${{  secrets.AWS_SECRET_KEY }}
+jobs:
+  backport:
+    runs-on: ubuntu-20.04
+    name: AWS VM check
+    steps:
+      - name: AWS VM check
+        run: |
+          echo "AWS VM check"
+      - name: Install AWS CLI 2
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install --update
+        shell: bash
+      # Configure AWS credentials
+      - name: AWS config
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY }}
+          aws configure set aws_secret_access_key ${{  secrets.AWS_SECRET_KEY }}
+          aws configure set region us-west-2
+          aws ec2 describe-regions --output text --query Regions[*].[RegionName] >>regions.txt
+          while read -r region;
+          do
+            region=$(echo "$region" | tr -d '[:space:]')
+            aws ec2 describe-instances --region $region |jq '.Reservations[].Instances[] | "| \(.Tags[].Value) | \(.InstanceId) | \(.State.Name) |"'| sed 's/\"//g' >>instances.txt
+          done < "regions.txt"
+          echo 'BENCHMARK_REPORT<<EOF'  >> $GITHUB_ENV
+          cat instances.txt             >> $GITHUB_ENV
+          echo 'EOF'                    >> $GITHUB_ENV
+        shell: bash
+      - name: Post Run - Comment Report
+        run: |
+           echo "${{ env.BENCHMARK_REPORT}}"
+        # uses: peter-evans/create-or-update-comment@v1
+        # with:
+        #   issue-number: ${{ env.ISSUE_NUMBER }}
+        #   body: |
+        #     **Benchmark Report**:
+
+        #     ```yaml
+        #     ${{ env.BENCHMARK_REPORT }}
+        #     ```
+           
