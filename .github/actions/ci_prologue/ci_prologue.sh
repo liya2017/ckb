@@ -24,7 +24,8 @@ fun_jobs(){
   echo "$job_list" | sed "s/\[//g" | sed "s/\]//g" | sed "s/,/\n/g" > job_run.txt
   while read -r LINE;
   do
-    LINE="ci_"$(echo "$LINE" | sed -e 's/\r//g')
+    # LINE="ci_"$(echo "$LINE" | sed -e 's/\r//g')
+    LINE="ci_$(printf "${LINE}")"
     if [[ $GITHUB_WORKFLOW == "$LINE"* ]];then
       echo "job_name is"$LINE
       echo $GITHUB_WORKFLOW
