@@ -7,6 +7,7 @@ on:
   push:
     branches:
       - 'pkg/*'
+      - 'benchmark_dashboard_test'
   schedule:
     - cron: '0 0 * * *'
   # Manurally trigger
@@ -17,25 +18,26 @@ jobs:
   benchmark:
     name: Benchmark
     runs-on: ubuntu-latest
-    if: |
-          (
-            github.event_name == 'pull_request_review' &&
-            contains(github.event.review.body, '#benchmark')
-          ) || (
-            github.event_name == 'schedule' &&
-            github.repository_owner == 'nervosnetwork'
-          ) || (
-            github.event_name == 'workflow_dispatch'
-          )
+    # if: |
+    #       (
+    #         github.event_name == 'pull_request_review' &&
+    #         contains(github.event.review.body, '#benchmark')
+    #       ) || (
+    #         github.event_name == 'schedule' &&
+    #         github.repository_owner == 'nervosnetwork'
+    #       ) || (
+    #         github.event_name == 'workflow_dispatch'
+    #       )
     env:
       AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
       AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
       AWS_EC2_TYPE:  "c5.xlarge"
       GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
-      DB_HOST: ${{ secrets.DB_HOST }}
-      DB_PORT: ${{ secrets.DB_PORT }}
-      DB_USER: ${{ secrets.DB_USER }}
+      PGHOST: ${{ secrets.DB_HOST }}
+      PGPORT: ${{ secrets.DB_PORT }}
+      PGUSER: ${{ secrets.DB_USER }}
       PGPASSWORD: ${{ secrets.DB_PASSWORD }}
+      PGDATABASE: "ckbtest"
       GITHUB_REF_NAME: ${{ github.ref_name }}
       GITHUB_REPO: ${{ github.repository }}
       GITHUB_EVENT_NAME: ${{ github.event_name }}
@@ -43,6 +45,7 @@ jobs:
       - uses: actions/checkout@v2
         with:
           repository: nervosnetwork/ckb-integration-test
+          ref: test_monitoring
       - name: Get branch name when event is pr review comments
         if: github.event_name == 'pull_request_review' && contains(github.event.review.body, '#benchmark')
         uses: xt0rted/pull-request-comment-branch@v1
@@ -66,16 +69,16 @@ jobs:
       - name: Set test state when benchmark failed.
         if: ${{ failure() }}
         run: echo "STATE=1" >> $GITHUB_ENV
-      - name: Clean Up
-        if: ${{ always() }}
-        env:
-          JOB_ID: "benchmark-${{ github.repository }}-${{ github.ref_name }}-${{ steps.date.outputs.date }}-in-10h"
-        run: ./ckb-bench/devtools/ci/script/benchmark.sh clean
+      # - name: Clean Up
+      #   if: ${{ always() }}
+      #   env:
+      #     JOB_ID: "benchmark-${{ github.repository }}-${{ github.ref_name }}-${{ steps.date.outputs.date }}-in-10h"
+      #   run: ./ckb-bench/devtools/ci/script/benchmark.sh clean
       - name: insert data to db
         if: ${{ always() }}
         env:
           JOB_ID: "benchmark-${{ github.repository }}-${{ github.ref_name }}-${{ steps.date.outputs.date }}-in-10h"
-        run: ./ckb-bench/devtools/ci/script/benchmark.sh insert_data_to_db
+        run: ./ckb-bench/devtools/ci/script/benchmark.sh insert_report_to_postgres
       - uses: actions/upload-artifact@v2
         with:
           name: ckb-bench.log
