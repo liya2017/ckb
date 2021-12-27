@@ -6,7 +6,7 @@ on:
   push:
     branches:
       - 'pkg/*'
-      - 'fix_sync_mainnet'
+      - 'fix_sync_mainnet_bak'
 
 jobs:
   sync-mainnet:
@@ -32,7 +32,7 @@ jobs:
         timeout-minutes: 1200
         env:
           JOB_ID: "sync-mainnet-${{ github.repository }}-${{ github.ref_name }}-${{ steps.date.outputs.date }}-in-10h"
-        run: ./ckb-sync-mainnet/script/sync-mainnet.sh run
+        run: echo "1234"
       - name: Set test state when sync-mainnet success.
         if: ${{ success() }}
         run: echo "GITHUB_RUN_STATE=0" >> $GITHUB_ENV
@@ -52,7 +52,7 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
         run: |
-            [ -z "${{ secrets.PGHOST }}" ] || echo "1234"
+            [ -z "${PGHOST}" ] || echo "$PGHOST"
       - name: Clean Up
         if: ${{ always() }}
         env:
