@@ -6,11 +6,12 @@ on:
   push:
     branches:
       - 'pkg/*'
+      - 'sync_mainnet_failed'
 
 jobs:
   sync-mainnet:
     runs-on: [ self-hosted, linux ]
-    if: ${{ github.repository_owner == 'nervosnetwork' }}
+    # if: ${{ github.repository_owner == 'nervosnetwork' }}
     timeout-minutes: 1200
     env:
       AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
@@ -23,6 +24,7 @@ jobs:
       - uses: actions/checkout@v2
         with:
           repository: nervosnetwork/ckb-integration-test
+          ref: times_should_be_string
       - name: Get Current Date
         id: date
         run: |
