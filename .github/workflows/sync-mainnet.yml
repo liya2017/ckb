@@ -17,6 +17,9 @@ jobs:
       AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
       AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
       GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
+      GITHUB_BRANCH: ${{ github.ref_name }}
+      GITHUB_REPOSITORY: ${{ github.repository }}
+      GITHUB_EVENT_NAME: ${{ github.event_name }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -32,29 +35,26 @@ jobs:
         timeout-minutes: 1200
         env:
           JOB_ID: "sync-mainnet-${{ github.repository }}-${{ github.ref_name }}-${{ steps.date.outputs.date }}-in-10h"
-        run: echo "1234"
+        run: echo ${JOB_ID}
       - name: Set test state when sync-mainnet success.
         if: ${{ success() }}
         run: echo "GITHUB_RUN_STATE=0" >> $GITHUB_ENV
       - name: Set test state when sync-mainnet failed.
         if: ${{ failure() }}
         run: echo "GITHUB_RUN_STATE=1" >> $GITHUB_ENV
-      - name: insert report to postgres
-        if: ${{ always() }}
-        env:
-          JOB_ID: "sync-mainnet-${{ github.repository }}-${{ github.ref_name }}-${{ steps.date.outputs.date }}-in-10h"
-          PGHOST: ${{ secrets.PGHOST }}
-          PGPORT: ${{ secrets.PGPORT }}
-          PGUSER: ${{ secrets.PGUSER }}
-          PGPASSWORD: ${{ secrets.PGPASSWORD }}
-          PGDATABASE: ckbtest
-          GITHUB_BRANCH: ${{ github.ref_name }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_EVENT_NAME: ${{ github.event_name }}
-        run: |
-            [ -z "${PGHOST}" ] || echo "$PGHOST"
-      - name: Clean Up
-        if: ${{ always() }}
-        env:
-          JOB_ID: "sync-mainnet-${{ github.repository }}-${{ github.ref_name }}-${{ steps.date.outputs.date }}-in-10h"
-        run: ./ckb-sync-mainnet/script/sync-mainnet.sh clean
+      # - name: insert report to postgres
+      #   if: ${{ always() }}
+      #   env:
+      #     JOB_ID: "sync-mainnet-${{ github.repository }}-${{ github.ref_name }}-${{ steps.date.outputs.date }}-in-10h"
+      #     PGHOST: ${{ secrets.PGHOST }}
+      #     PGPORT: ${{ secrets.PGPORT }}
+      #     PGUSER: ${{ secrets.PGUSER }}
+      #     PGPASSWORD: ${{ secrets.PGPASSWORD }}
+      #     PGDATABASE: ckbtest
+      #   run: |
+      #       [ -z "${PGHOST}" ] || ./ckb-sync-mainnet/script/sync-mainnet.sh insert_report_to_postgres
+      # - name: Clean Up
+      #   if: ${{ always() }}
+      #   env:
+      #     JOB_ID: "sync-mainnet-${{ github.repository }}-${{ github.ref_name }}-${{ steps.date.outputs.date }}-in-10h"
+      #   run: ./ckb-sync-mainnet/script/sync-mainnet.sh clean
