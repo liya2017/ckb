@@ -12,5 +12,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - run: |
-         echo Submitter's repo address ${{ github.repository }} && echo Submitter's Branch ${{ github.head_ref }}
-         echo "test branch"
+          echo Submitter's repo address ${{ github.repository }} && echo Submitter's Branch ${{ github.head_ref }}
+          echo test
+
