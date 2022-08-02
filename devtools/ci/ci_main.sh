@@ -5,13 +5,13 @@ clean_threshold=40000
 available_space=$(df -m "$GITHUB_WORKSPACE" | tail -1 | awk '{print $4}')
 if [[ $is_self_runner == "self" ]]; then
   export CARGO_TARGET_DIR="$GITHUB_WORKSPACE/../target"
-  export RUSTC_WRAPPER='sccache'
-  export SCCACHE_CACHE_SIZE='20G'
+  # export RUSTC_WRAPPER='sccache'
+  # export SCCACHE_CACHE_SIZE='20G'
   #clean space when disk full
-  if [[ $available_space -lt $clean_threshold ]]; then
-    echo "Run clean command"
-    cargo clean --target-dir "${CARGO_TARGET_DIR}" || true
-  fi
+  # if [[ $available_space -lt $clean_threshold ]]; then
+  #   echo "Run clean command"
+  #   cargo clean --target-dir "${CARGO_TARGET_DIR}" || true
+  # fi
 fi
 CARGO_TARGET_DIR=${CARGO_TARGET_DIR:-"$GITHUB_WORKSPACE/target"}
 case $GITHUB_WORKFLOW in
