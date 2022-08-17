@@ -29,12 +29,12 @@ quick-test: ## Run all tests, excluding some tests can be time-consuming to exec
 
 .PHONY: cov-install-tools
 cov-install-tools:
-	rustup component add llvm-tools-preview --toolchain nightly
-	grcov --version || cargo +nightly install grcov
+	rustup component add llvm-tools-preview --toolchain nightly-2022-03-22
+	grcov --version || cargo +nightly-2022-03-22 install grcov
 
 .PHONY: cov-collect-data
 cov-collect-data:
-	RUSTUP_TOOLCHAIN=nightly \
+	RUSTUP_TOOLCHAIN=nightly-2022-03-22 \
 	grcov "${COV_PROFRAW_DIR}" --binary-path "${CARGO_TARGET_DIR}/debug/" \
 		-s . -t lcov --branch --ignore-not-existing --ignore "/*" \
 		--ignore "*/tests/*" \
@@ -53,7 +53,7 @@ cov-gen-report:
 .PHONY: cov
 cov: cov-install-tools ## Run code coverage.
 	mkdir -p "${COV_PROFRAW_DIR}"; rm -f "${COV_PROFRAW_DIR}/*.profraw"
-	RUSTFLAGS="-Zinstrument-coverage" LLVM_PROFILE_FILE="${COV_PROFRAW_DIR}/ckb-cov-%p-%m.profraw" cargo +nightly-2022-03-22 test --all
+	RUSTFLAGS="-Zinstrument-coverage" LLVM_PROFILE_FILE="${COV_PROFRAW_DIR}/ckb-cov-%p-%m.profraw" cargo +nightly-2022-03-22 test --all -- --test-threads 1
 	GRCOV_OUTPUT=lcov-unit-test.info make cov-collect-data
 
 .PHONY: wasm-build-test
