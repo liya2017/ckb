@@ -1,0 +1,16 @@
+name: test
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+on:
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+jobs:
+  test:
+    name: test
+    runs-on: macos-11
+    steps:
+    - uses: actions/checkout@v2
+    - run: |
+           echo Submitter's repo address ${{ github.repository }} && echo Submitter's Branch ${{ github.head_ref }}
+           echo test
